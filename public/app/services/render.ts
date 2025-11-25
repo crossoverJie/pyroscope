@@ -23,6 +23,7 @@ interface RenderSingleProps {
   query: string;
   refreshToken?: string;
   maxNodes: string | number;
+  spanId?: string;
 }
 export async function renderSingle(
   props: RenderSingleProps,

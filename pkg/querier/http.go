@@ -177,12 +177,34 @@ func (q *QueryHandlers) Render(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	spanId := req.URL.Query().Get("spanId")
 	var resFlame *connect.Response[querierv1.SelectMergeStacktracesResponse]
+	var flamegraph *querierv1.FlameGraph
 	g, gCtx := errgroup.WithContext(req.Context())
 	selectParamsClone := selectParams.CloneVT()
 	g.Go(func() error {
 		var err error
-		resFlame, err = q.client.SelectMergeStacktraces(gCtx, connect.NewRequest(selectParamsClone))
+		var spanSelector []string
+		if spanId != "" {
+			spanSelector = []string{spanId}
+			selectMergeSpanProfileReq := &querierv1.SelectMergeSpanProfileRequest{
+				SpanSelector:  spanSelector,
+				Start:         selectParams.Start,
+				End:           selectParams.End,
+				ProfileTypeID: selectParams.ProfileTypeID,
+				LabelSelector: selectParams.LabelSelector,
+			}
+			spanProfile, err := q.client.SelectMergeSpanProfile(gCtx, connect.NewRequest(selectMergeSpanProfileReq))
+			if err != nil {
+				return err
+			}
+			flamegraph = spanProfile.Msg.Flamegraph
+			return nil
+		} else {
+			resFlame, err = q.client.SelectMergeStacktraces(gCtx, connect.NewRequest(selectParamsClone))
+			flamegraph = resFlame.Msg.Flamegraph
+			return err
+		}
 		return err
 	})
 
@@ -215,7 +237,7 @@ func (q *QueryHandlers) Render(w http.ResponseWriter, req *http.Request) {
 		seriesVal = resSeries.Msg.Series[0]
 	}
 
-	fb := phlaremodel.ExportToFlamebearer(resFlame.Msg.Flamegraph, profileType)
+	fb := phlaremodel.ExportToFlamebearer(flamegraph, profileType)
 	fb.Timeline = timeline.New(seriesVal, selectParams.Start, selectParams.End, int64(timelineStep))
 
 	if len(groupBy) > 0 {

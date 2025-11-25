@@ -10,6 +10,7 @@ export function buildRenderURL(
     groupBy?: string;
     groupByValue?: string;
     aggregation?: string;
+    spanId?: string;
   },
   fromOverride?: string,
   untilOverride?: string
@@ -19,6 +20,7 @@ export function buildRenderURL(
   params.set('from', fromOverride || state.from);
   params.set('until', untilOverride || state.until);
   state.refreshToken && params.set('refreshToken', state.refreshToken);
+  state.spanId && params.set('spanId', state.spanId);
   if (state.maxNodes && state.maxNodes !== '0') {
     params.set('max-nodes', String(state.maxNodes));
   }

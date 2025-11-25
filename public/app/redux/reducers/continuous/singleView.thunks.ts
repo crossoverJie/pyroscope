@@ -7,10 +7,10 @@ import { ContinuousState } from './state';
 let singleViewAbortController: AbortController | undefined;
 
 export const fetchSingleView = createAsyncThunk<
-  RenderOutput,
-  null,
-  { state: { continuous: ContinuousState } }
->('continuous/singleView', async (_, thunkAPI) => {
+    RenderOutput,
+    { spanId?: string } | null,  // <-- 支持 spanId 参数
+    { state: { continuous: ContinuousState } }
+>('continuous/singleView', async (params, thunkAPI) => {
   if (singleViewAbortController) {
     singleViewAbortController.abort();
   }
@@ -19,7 +19,10 @@ export const fetchSingleView = createAsyncThunk<
   thunkAPI.signal = singleViewAbortController.signal;
 
   const state = thunkAPI.getState();
-  const res = await renderSingle(state.continuous, singleViewAbortController);
+  const renderParams = params?.spanId
+      ? { ...state.continuous, spanId: params.spanId }
+      : state.continuous;
+  const res = await renderSingle(renderParams, singleViewAbortController);
 
   if (res.isOk) {
     return Promise.resolve(res.value);
