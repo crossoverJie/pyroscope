@@ -8,7 +8,7 @@ let singleViewAbortController: AbortController | undefined;
 
 export const fetchSingleView = createAsyncThunk<
     RenderOutput,
-    { spanId?: string } | null,  // <-- 支持 spanId 参数
+    { spanId?: string } | null,
     { state: { continuous: ContinuousState } }
 >('continuous/singleView', async (params, thunkAPI) => {
   if (singleViewAbortController) {

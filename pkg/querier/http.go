@@ -202,6 +202,9 @@ func (q *QueryHandlers) Render(w http.ResponseWriter, req *http.Request) {
 			return nil
 		} else {
 			resFlame, err = q.client.SelectMergeStacktraces(gCtx, connect.NewRequest(selectParamsClone))
+			if err != nil {
+				return err
+			}
 			flamegraph = resFlame.Msg.Flamegraph
 			return err
 		}
